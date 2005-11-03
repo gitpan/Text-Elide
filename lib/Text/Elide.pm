@@ -1,17 +1,10 @@
 package Text::Elide;
 
-use version; $VERSION = qv('0.0.1');
+use version; $VERSION = qv('0.0.2');
 
 use warnings;
 use strict;
 use Carp;
-
-# Other recommended modules (uncomment to use):
-#  use IO::Prompt;
-#  use Perl6::Export;
-#  use Perl6::Slurp;
-#  use Perl6::Say;
-#  use Regexp::Autoflags;
 
 use base qw( Exporter );
 our @EXPORT_OK = qw( elide );
@@ -106,14 +99,11 @@ Text::Elide requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
+Readonly, List::Util, Test::More
 
-None.
+=head1 SEE ALSO
 
+Text::Truncate, String::Truncate
 
 =head1 INCOMPATIBILITIES
 

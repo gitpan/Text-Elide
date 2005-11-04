@@ -9,8 +9,11 @@ WriteMakefile(
     ABSTRACT_FROM       => 'lib/Text/Elide.pm',
     PL_FILES            => {},
     PREREQ_PM => {
-        'Test::More' => 0,
-        'version'    => 0,
+        'Test::More'            => 0,
+        'version'               => 0,
+        'Smart::Comments'       => 0,
+        'Readonly'              => 0,
+        'List::Util'            => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Text-Elide-*' },

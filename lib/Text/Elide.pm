@@ -1,6 +1,6 @@
 package Text::Elide;
 
-use version; $VERSION = qv('0.0.2');
+use version; $VERSION = qv('0.0.3');
 
 use warnings;
 use strict;
@@ -13,7 +13,7 @@ our @EXPORT_OK = qw( elide );
 use Readonly;
 use List::Util qw( min );
 
-Readonly my $elision => " ...";
+Readonly my $default_elipsis => " ...";
 
 # Module implementation here
 
@@ -22,25 +22,57 @@ sub elide
     defined( my $string = shift ) || die "no string argument\n";
     defined( my $length = shift ) || die "no length argument\n";
     croak "length must be a positive integer\n" unless $length > 0;
+    my $elipsis = shift || $default_elipsis;
+    # trivial case where string is already less than length
     return $string if length( $string ) <= $length;
     ### require: length( $string ) > $length
-    my $lookahead = substr( $string, $length, 1 );
-    ### require: length( $lookahead ) == 1
+    # to check if we have broken in the middle of a word ...
+    my $broken_word = 
+        substr( $string, $length-1, 1 ) =~ /\S/ &&
+        substr( $string, $length, 1 ) =~ /\S/
+    ;
+    # crudely truncate ...
     $string = substr( $string, 0, $length );
     ### require: length( $string ) == $length
-    return $string if $lookahead =~ /\s/;
-    ### require: $lookahead =~ /\S$/
+    # strip trailing whitespace
     $string =~ s/\s*$//;
     ### require: $string =~ /\S$/
-    return $string unless $string =~ /\s/;
-    ### require: $string =~ /\s/
-    $string =~ s/\s*\S+$//;
-    ### require: $string =~ /\S$/
-    my $padding = $length - length( $string );
-    return $string unless $padding >= length( $elision );
-    ### require: $padding >= length( $elision )
-    $string = $string . $elision;
-    ### require: length( $string ) <= $length
+    # return truncated string if only one word / part of word (no whitespace) -
+    # ( ... but possibly with leading whitespace)
+    return $string if $string =~ /^\s*\S+$/;
+    ### require: $string =~ /\S\s+\S/
+    croak "elipsis string ($elipsis) is longer than length ($length)\n"
+        if length( $elipsis ) > $length
+    ;
+    ### require: length( $elipsis ) <= $length
+    if ( $broken_word )
+    {
+        # remove partial word if crude truncation split mid-word
+        $string =~ s/\s+\S+$//;
+        ### require: $string =~ /\S$/
+    }
+    # if there is only one word ...
+    unless ( $string =~ /\S\s+\S/ )
+    {
+        # check if room for elipsis ...
+        if ( length( $string ) + length( $elipsis ) <= $length )
+        {
+            return $string . $elipsis;
+        }
+        # ... else return string without elipsis
+        return $string;
+    }
+    ### require: $string =~ /\s+\S+$/
+    # recursively remove "words" until there is room for the elipsis string
+    while ( length( $string ) + length( $elipsis ) > $length )
+    {
+        ### require: length( $string ) + length( $elipsis ) > $length
+        ### require: $string =~ /\s+\S+/
+        $string =~ s/\s+\S+$//;
+        ### require: length( $string ) > 0
+    }
+    ### require: length( $string ) + length( $elipsis ) <= $length
+    $string = $string . $elipsis;
     return $string;
 }
 
@@ -64,7 +96,7 @@ This document describes Text::Elide version 0.0.1
 
 =head1 DESCRIPTION
 
-This is a simple module that exports a single function - elide - which takes a string and a length and truncates the string to at most the length given. It does this is a way which is "word" aware, so that you always end up with a string that only has complete words, and the elision string is only inserted if there is room for it. A word here simply means non-whitespace (\S+). The default elision string is " ...".  The only exception to the complete word condition is if there is only one word (i.e. no whitespace).
+This is a simple module that exports a single function - elide - which takes a string and a length and truncates the string to at most the length given. It does this is a way which is "word" aware, so that you always end up with a string that only has complete words, and the elipsis string is only inserted if there is room for it. A word here simply means non-whitespace (\S+). The default elipsis string is " ...".  The only exception to the complete word condition is if there is only one word (i.e. no whitespace).
 
 Here are some example inputs /outputs:
 
@@ -81,7 +113,7 @@ Here are some example inputs /outputs:
 
 =head2 elide( string, length )
 
-This function return a string less than or equal to length, with appropriate truncation / elision.
+This function return a string less than or equal to length, with appropriate truncation / elipsis.
 
 =head1 DIAGNOSTICS
 
@@ -119,7 +151,7 @@ L<http://rt.cpan.org>.
 
 =head1 TODO
 
-Add an elision string parameter.
+Add an elipsis string parameter.
 
 =head1 AUTHOR
 
